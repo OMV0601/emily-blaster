@@ -2,24 +2,27 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --parchment:      #F2E7CF;
-  --parchment-dark: #E4D4B0;
-  --ink:            #1F1A14;
-  --ink-soft:       #4A4036;
-  --blue:           #1C3F5E;
-  --blue-light:     #3D6E94;
-  --gold:           #B8893E;
-  --oxblood:        #7A2E2E;
-  --font-display:   'Cormorant Garamond', Georgia, serif;
-  --font-body:      'EB Garamond', Georgia, serif;
+  /* ── Book-cover Prussian-blue palette ── */
+  --bg-deep:    #0D1F33;   /* dominant dark navy */
+  --bg-mid:     #1C3F5E;   /* Prussian blue */
+  --bg-light:   #26527A;   /* lighter navy */
+  --accent:     #3D6E94;   /* wave blue */
+  --gold:       #C9973F;   /* antique gold */
+  --gold-light: #E8B86D;   /* wave-crest gold */
+  --cream:      #F2E7CF;   /* warm cream text */
+  --cream-soft: #9A8B78;   /* secondary text */
+  --oxblood:    #8B3A3A;   /* errors */
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body:    'EB Garamond', Georgia, serif;
 }
 
 html, body {
   width: 100%; height: 100%;
   overflow: hidden;
-  background: var(--ink);
+  background: var(--bg-deep);
   font-family: var(--font-body);
-  color: var(--ink);
+  color: var(--cream);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -38,7 +41,7 @@ html, body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.6s ease;
-  background: var(--parchment);
+  background: var(--bg-deep);
 }
 
 .screen.active {
@@ -46,30 +49,19 @@ html, body {
   pointer-events: all;
 }
 
-/* ── Paper grain overlay (pseudo) ─────────────────────────────── */
-.screen::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-  pointer-events: none;
-  z-index: 10;
-}
-
 /* Vignette */
 .screen::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(30,20,10,0.35) 100%);
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.45) 100%);
   pointer-events: none;
   z-index: 9;
 }
 
 /* ── Title screen ─────────────────────────────────────────────── */
 #screen-title {
-  background: var(--parchment);
+  background: var(--bg-deep);
 }
 
 .title-canvas {
@@ -92,7 +84,7 @@ html, body {
 
 .title-ornament {
   font-size: 2.5rem;
-  color: var(--blue);
+  color: var(--gold);
   line-height: 1;
   animation: float 4s ease-in-out infinite;
 }
@@ -106,24 +98,24 @@ html, body {
   font-family: var(--font-display);
   font-size: clamp(3rem, 8vw, 6rem);
   font-weight: 700;
-  color: var(--ink);
+  color: var(--cream);
   letter-spacing: 0.02em;
   line-height: 1;
-  text-shadow: 2px 3px 0 rgba(28,63,94,0.12);
+  text-shadow: 0 0 60px rgba(201,151,63,0.25), 2px 3px 0 rgba(0,0,0,0.5);
 }
 
 .tagline {
   font-family: var(--font-display);
   font-style: italic;
   font-size: clamp(1rem, 2.5vw, 1.4rem);
-  color: var(--blue);
+  color: var(--gold-light);
   letter-spacing: 0.04em;
 }
 
 .attribution {
   font-family: var(--font-body);
   font-size: 0.85rem;
-  color: var(--ink-soft);
+  color: var(--cream-soft);
   letter-spacing: 0.03em;
 }
 .attribution em { font-style: italic; }
@@ -135,14 +127,14 @@ html, body {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--parchment);
-  background: var(--blue);
-  border: 2px solid var(--gold);
-  padding: 0.65em 2.2em;
+  color: var(--cream);
+  background: transparent;
+  border: 1px solid var(--gold);
+  padding: 0.65em 2.4em;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: color 0.3s ease, background 0.3s ease;
+  transition: color 0.3s ease;
   outline: none;
 }
 
@@ -157,12 +149,12 @@ html, body {
   z-index: 0;
 }
 .btn-primary:hover::before { transform: scaleX(1); }
-.btn-primary:hover { color: var(--ink); }
-.btn-primary span, .btn-primary { position: relative; z-index: 1; }
+.btn-primary:hover { color: var(--bg-deep); }
+.btn-primary > * { position: relative; z-index: 1; }
 
 /* ── Game screen ──────────────────────────────────────────────── */
 #screen-game {
-  background: var(--parchment);
+  background: var(--bg-deep);
   align-items: stretch;
   justify-content: stretch;
 }
@@ -178,9 +170,9 @@ html, body {
   display: flex;
   align-items: center;
   gap: 2rem;
-  padding: 0.5rem 1.5rem;
-  background: var(--parchment-dark);
-  border-bottom: 1px solid rgba(31,26,20,0.2);
+  padding: 0.45rem 1.5rem;
+  background: var(--bg-mid);
+  border-bottom: 1px solid rgba(201,151,63,0.2);
   z-index: 20;
   position: relative;
 }
@@ -194,10 +186,10 @@ html, body {
 
 .hud-label {
   font-family: var(--font-body);
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--cream-soft);
 }
 
 .hud-value {
@@ -212,8 +204,8 @@ html, body {
 .btn-mute {
   margin-left: auto;
   background: none;
-  border: 1px solid var(--ink-soft);
-  color: var(--ink-soft);
+  border: 1px solid var(--cream-soft);
+  color: var(--cream-soft);
   font-size: 1rem;
   width: 2rem; height: 2rem;
   cursor: pointer;
@@ -222,8 +214,8 @@ html, body {
   transition: border-color 0.2s, color 0.2s;
   padding: 0;
 }
-.btn-mute:hover { border-color: var(--blue); color: var(--blue); }
-.btn-mute.muted { border-color: var(--oxblood); color: var(--oxblood); text-decoration: line-through; }
+.btn-mute:hover { border-color: var(--gold); color: var(--gold); }
+.btn-mute.muted { border-color: var(--oxblood); color: var(--oxblood); }
 
 /* Game body */
 .game-body {
@@ -240,48 +232,48 @@ html, body {
   justify-content: center;
   overflow: hidden;
   min-width: 0;
+  background: var(--bg-deep);
 }
 
-#game-canvas {
-  display: block;
-  /* sizing handled in JS */
-}
+#game-canvas { display: block; }
 
 /* Manuscript panel */
 .manuscript-panel {
   width: 240px;
   min-width: 200px;
   max-width: 280px;
-  background: rgba(244,235,207,0.6);
-  border-left: 1px solid rgba(31,26,20,0.15);
+  background: var(--bg-mid);
+  border-left: 1px solid rgba(201,151,63,0.18);
   display: flex;
   flex-direction: column;
   padding: 1rem;
-  box-shadow: inset 4px 0 12px rgba(31,26,20,0.06);
+  box-shadow: inset 4px 0 16px rgba(0,0,0,0.3);
   overflow: hidden;
 }
 
 .manuscript-header {
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--ink-soft);
-  border-bottom: 1px solid var(--gold);
+  color: var(--gold);
+  border-bottom: 1px solid rgba(201,151,63,0.35);
   padding-bottom: 0.4rem;
   margin-bottom: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .manuscript-lines {
   font-family: var(--font-body);
   font-style: italic;
-  font-size: 0.95rem;
-  line-height: 1.8;
-  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.9;
+  color: var(--cream);
   display: flex;
   flex-direction: column;
-  gap: 0;
 }
 
 .manuscript-word {
@@ -297,14 +289,11 @@ html, body {
 
 .manuscript-line {
   display: block;
-  overflow: hidden;
-  min-height: 1.8em;
+  min-height: 1.9em;
 }
 
 /* ── Victory screen ───────────────────────────────────────────── */
-#screen-victory {
-  background: var(--parchment);
-}
+#screen-victory { background: var(--bg-deep); }
 
 .victory-content {
   position: relative;
@@ -312,33 +301,40 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.2rem;
+  gap: 1rem;
   text-align: center;
   padding: 2rem;
-  max-width: 580px;
+  max-width: 600px;
 }
 
 .victory-title {
   font-family: var(--font-display);
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
   font-weight: 600;
-  color: var(--ink);
+  color: var(--cream);
   letter-spacing: 0.02em;
+}
+
+.victory-poem-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--gold-light);
+  letter-spacing: 0.04em;
 }
 
 .victory-poem {
   font-family: var(--font-body);
   font-style: italic;
-  font-size: clamp(1rem, 2vw, 1.2rem);
-  line-height: 1.9;
-  color: var(--ink);
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 2;
+  color: var(--cream);
   text-align: left;
-  padding: 1.5rem 2rem;
-  border: 1px solid rgba(184,137,62,0.4);
+  padding: 1.4rem 2rem;
+  border: 1px solid rgba(201,151,63,0.25);
   border-top: 2px solid var(--gold);
-  background: rgba(255,255,255,0.25);
-  box-shadow: 0 4px 24px rgba(31,26,20,0.1);
-  position: relative;
+  background: rgba(28,63,94,0.5);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.4);
 }
 
 .victory-poem p {
@@ -362,7 +358,7 @@ html, body {
   align-items: center;
 }
 
-.stat-sep { color: var(--ink-soft); }
+.stat-sep { color: var(--cream-soft); }
 
 /* ── Game Over screen ─────────────────────────────────────────── */
-#screen-gameover { background: var(--parchment); }
+#screen-gameover { background: var(--bg-deep); }

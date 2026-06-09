@@ -84,7 +84,7 @@ export class InkParticle {
     this.life    = rand(PARTICLE.lifeMin, PARTICLE.lifeMax);
     this.maxLife = this.life;
     this.size    = rand(PARTICLE.sizeMin, PARTICLE.sizeMax);
-    this.color   = correct ? COLORS.blue : COLORS.oxblood;
+    this.color   = correct ? COLORS.gold : COLORS.oxblood;
     this.dead    = false;
   }
 

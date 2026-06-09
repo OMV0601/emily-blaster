@@ -1,11 +1,10 @@
 import './style.css';
-import { CANVAS_W, CANVAS_H, COLORS, POEM_SEQUENCE, POEM_LINES } from './config.js';
+import { CANVAS_W, CANVAS_H, COLORS, POEMS } from './config.js';
 import { Game } from './game.js';
 import { initInput } from './input.js';
 import { setMuted, isMuted } from './audio.js';
 
 // ── State machine ─────────────────────────────────────────────────
-// Screens: 'title' | 'game' | 'victory' | 'gameover'
 let currentScreen = 'title';
 
 const screens = {
@@ -31,17 +30,11 @@ function resizeGameCanvas() {
   const wrap  = gameCanvas.parentElement;
   const cssW  = wrap.clientWidth;
   const cssH  = wrap.clientHeight;
-
-  // Maintain 960:600 aspect, letterbox
   const scale = Math.min(cssW / CANVAS_W, cssH / CANVAS_H);
   const w = Math.round(CANVAS_W * scale);
   const h = Math.round(CANVAS_H * scale);
-
   gameCanvas.style.width  = w + 'px';
   gameCanvas.style.height = h + 'px';
-  // canvas.width/height are in physical pixels (CSS size × dpr).
-  // The context transform is reset when dimensions are set; render() applies
-  // all scaling itself so we never need to pre-scale the context here.
   gameCanvas.width  = Math.round(w * dpr);
   gameCanvas.height = Math.round(h * dpr);
 }
@@ -50,24 +43,19 @@ window.addEventListener('resize', resizeGameCanvas);
 
 // ── Manuscript DOM panel ───────────────────────────────────────────
 const manuscriptContainer = document.getElementById('manuscript-lines');
+const manuscriptHeader    = document.querySelector('.manuscript-header');
 
-// Tracks which words have been rendered
-const manuscriptState = {
-  lines: [[], [], [], []],  // 4 poem lines, each an array of word-spans
-};
+// Built fresh each game from the chosen poem
+let wordToLine = {};
 
-// Map sequence index → line & position within line
-const WORD_TO_LINE = buildWordLineMap();
-
-function buildWordLineMap() {
+// Map sequence index → { line: number, raw: string } for any poem
+function buildWordLineMap(poem) {
   const map = {};
   let seqIdx = 0;
-  for (let li = 0; li < POEM_LINES.length; li++) {
-    // Split on spaces but keep words; strip punctuation for matching
-    const lineWords = POEM_LINES[li].split(' ');
-    for (const raw of lineWords) {
+  for (let li = 0; li < poem.lines.length; li++) {
+    for (const raw of poem.lines[li].split(' ')) {
       const clean = raw.replace(/[^a-zA-Z]/g, '');
-      if (POEM_SEQUENCE[seqIdx] && POEM_SEQUENCE[seqIdx].toLowerCase() === clean.toLowerCase()) {
+      if (poem.sequence[seqIdx] && poem.sequence[seqIdx].toLowerCase() === clean.toLowerCase()) {
         map[seqIdx] = { line: li, raw };
         seqIdx++;
       }
@@ -76,10 +64,14 @@ function buildWordLineMap() {
   return map;
 }
 
-function initManuscript() {
+function initManuscript(poem) {
   manuscriptContainer.innerHTML = '';
-  manuscriptState.lines = [[], [], [], []];
-  for (let i = 0; i < POEM_LINES.length; i++) {
+  wordToLine = buildWordLineMap(poem);
+  // Show poem title above manuscript lines
+  if (manuscriptHeader) {
+    manuscriptHeader.textContent = poem.title;
+  }
+  for (let i = 0; i < poem.lines.length; i++) {
     const lineEl = document.createElement('span');
     lineEl.className = 'manuscript-line';
     lineEl.id = `mline-${i}`;
@@ -88,15 +80,13 @@ function initManuscript() {
 }
 
 function appendWordToManuscript(seqIdx) {
-  const info = WORD_TO_LINE[seqIdx];
+  const info = wordToLine[seqIdx];
   if (!info) return;
   const lineEl = document.getElementById(`mline-${info.line}`);
   if (!lineEl) return;
-
   const span = document.createElement('span');
   span.className = 'manuscript-word';
   span.textContent = (lineEl.textContent ? ' ' : '') + info.raw;
-  span.style.animationDelay = '0s';
   lineEl.appendChild(span);
 }
 
@@ -124,24 +114,26 @@ btnMute.addEventListener('click', () => {
 });
 
 // ── Game instance ─────────────────────────────────────────────────
-let game = null;
-let rafId = null;
-let lastTime = null;
+let game          = null;
+let rafId         = null;
+let lastTime      = null;
+let activePoemIdx = 0; // track which poem was last used to avoid repeats
+
+function pickPoem() {
+  // Rotate through poems in random order, avoiding consecutive repeats
+  const others = POEMS.filter((_, i) => i !== activePoemIdx);
+  const choice = others[Math.floor(Math.random() * others.length)];
+  activePoemIdx = POEMS.indexOf(choice);
+  return choice;
+}
 
 function startGame() {
   resizeGameCanvas();
-  initManuscript();
+  const poem = pickPoem();
+  initManuscript(poem);
 
-  game = new Game(
-    gameCanvas,
-    onWin,
-    onGameOver,
-    onHUDUpdate,
-  );
+  game = new Game(gameCanvas, poem, onWin, onGameOver, onHUDUpdate);
 
-  // Map CSS px (relative to canvas element) → internal CANVAS_W coordinates.
-  // The canvas CSS width always equals the letterboxed pixel width, so the
-  // ratio cssX/cssW maps linearly to 0..CANVAS_W.
   initInput(gameCanvas, (cssX) => {
     const cssW = gameCanvas.getBoundingClientRect().width || 1;
     return (cssX / cssW) * CANVAS_W;
@@ -155,16 +147,15 @@ function startGame() {
 function loop(ts = 0) {
   rafId = requestAnimationFrame(loop);
   if (lastTime === null) lastTime = ts;
-  const dt = Math.min((ts - lastTime) / 1000, 0.05); // cap at 50ms
+  const dt = Math.min((ts - lastTime) / 1000, 0.05);
   lastTime = ts;
-
   if (currentScreen === 'game' && game) {
     game.update(dt);
     game.render();
   }
 }
 
-// ── Win / Game Over callbacks ─────────────────────────────────────
+// ── Win / Game Over ───────────────────────────────────────────────
 function onWin(score, accuracy) {
   populateVictoryScreen(score, accuracy);
   goTo('victory');
@@ -178,14 +169,26 @@ function populateVictoryScreen(score, accuracy) {
   document.getElementById('victory-score').textContent    = `Score: ${score}`;
   document.getElementById('victory-accuracy').textContent = `Accuracy: ${accuracy}%`;
 
+  // Show poem title + attribution on victory screen
+  const titleEl = document.getElementById('victory-poem-title');
+  if (titleEl && game) {
+    titleEl.textContent = game.poem.title;
+  }
+  const attrEl = document.querySelector('#screen-victory .attribution');
+  if (attrEl && game) {
+    attrEl.textContent = game.poem.attribution;
+  }
+
   const poemEl = document.getElementById('victory-poem');
   poemEl.innerHTML = '';
-  POEM_LINES.forEach((line, i) => {
-    const p = document.createElement('p');
-    p.textContent = line;
-    p.style.animationDelay = `${i * 0.25}s`;
-    poemEl.appendChild(p);
-  });
+  if (game) {
+    game.poem.lines.forEach((line, i) => {
+      const p = document.createElement('p');
+      p.textContent = line;
+      p.style.animationDelay = `${i * 0.25}s`;
+      poemEl.appendChild(p);
+    });
+  }
 }
 
 // ── Buttons ───────────────────────────────────────────────────────
@@ -193,12 +196,10 @@ document.getElementById('btn-begin').addEventListener('click', () => {
   goTo('game');
   startGame();
 });
-
 document.getElementById('btn-replay').addEventListener('click', () => {
   goTo('game');
   startGame();
 });
-
 document.getElementById('btn-retry').addEventListener('click', () => {
   goTo('game');
   startGame();
@@ -206,7 +207,7 @@ document.getElementById('btn-retry').addEventListener('click', () => {
 
 // ── Title screen ambient canvas ───────────────────────────────────
 (function initTitleCanvas() {
-  const tc = document.getElementById('title-canvas');
+  const tc   = document.getElementById('title-canvas');
   const tctx = tc.getContext('2d');
   let tw = 0, th = 0;
 
@@ -217,26 +218,26 @@ document.getElementById('btn-retry').addEventListener('click', () => {
   resizeTitle();
   new ResizeObserver(resizeTitle).observe(tc);
 
-  // Feather particle
   const feathers = Array.from({ length: 3 }, () => ({
-    x:     Math.random() * 400 + 200,
-    y:     Math.random() * -200 - 50,
-    rot:   Math.random() * Math.PI * 2,
-    rotV:  (Math.random() - 0.5) * 0.4,
-    vy:    20 + Math.random() * 15,
-    vx:    (Math.random() - 0.5) * 15,
-    alpha: 0.08 + Math.random() * 0.10,
+    x:    Math.random() * 400 + 200,
+    y:    Math.random() * -200 - 50,
+    rot:  Math.random() * Math.PI * 2,
+    rotV: (Math.random() - 0.5) * 0.4,
+    vy:   20 + Math.random() * 15,
+    vx:   (Math.random() - 0.5) * 15,
+    alpha: 0.12 + Math.random() * 0.12,
     size:  60 + Math.random() * 40,
   }));
 
-  // Ink wash blobs
-  const blobs = Array.from({ length: 6 }, () => ({
-    x: Math.random() * 800 + 100,
-    y: Math.random() * 500 + 50,
-    r: 60 + Math.random() * 120,
-    alpha: 0.025 + Math.random() * 0.03,
-    dx: (Math.random() - 0.5) * 8,
-    dy: (Math.random() - 0.5) * 8,
+  // Wave-wash blobs — gold tinted on dark bg
+  const blobs = Array.from({ length: 8 }, () => ({
+    x:  Math.random() * 900 + 50,
+    y:  Math.random() * 500 + 50,
+    r:  80 + Math.random() * 150,
+    a:  0.04 + Math.random() * 0.05,
+    dx: (Math.random() - 0.5) * 10,
+    dy: (Math.random() - 0.5) * 10,
+    gold: Math.random() > 0.55, // mix blue and gold blobs
   }));
 
   function drawTitleFrame(ts) {
@@ -244,42 +245,42 @@ document.getElementById('btn-retry').addEventListener('click', () => {
     if (currentScreen !== 'title') return;
     tctx.clearRect(0, 0, tw, th);
 
-    // Drifting ink blobs
     for (const b of blobs) {
       b.x += b.dx * 0.016;
       b.y += b.dy * 0.016;
-      if (b.x < -b.r)  b.x = tw + b.r;
+      if (b.x < -b.r)   b.x = tw + b.r;
       if (b.x > tw+b.r) b.x = -b.r;
-      if (b.y < -b.r)  b.y = th + b.r;
+      if (b.y < -b.r)   b.y = th + b.r;
       if (b.y > th+b.r) b.y = -b.r;
+
+      const col = b.gold ? `rgba(201,151,63,${b.a})` : `rgba(61,110,148,${b.a})`;
       const g = tctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
-      g.addColorStop(0, `rgba(28,63,94,${b.alpha})`);
-      g.addColorStop(1, 'rgba(28,63,94,0)');
+      g.addColorStop(0, col);
+      g.addColorStop(1, b.gold ? 'rgba(201,151,63,0)' : 'rgba(61,110,148,0)');
       tctx.fillStyle = g;
       tctx.beginPath();
       tctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
       tctx.fill();
     }
 
-    // Drifting feather outlines
     for (const f of feathers) {
-      f.y += f.vy * 0.016;
-      f.x += f.vx * 0.016 + Math.sin(ts * 0.0006 + f.rot) * 0.5;
+      f.y   += f.vy * 0.016;
+      f.x   += f.vx * 0.016 + Math.sin(ts * 0.0006 + f.rot) * 0.5;
       f.rot += f.rotV * 0.016;
       if (f.y > th + 100) { f.y = -100; f.x = Math.random() * tw; }
 
       tctx.save();
       tctx.translate(f.x, f.y);
       tctx.rotate(f.rot);
-      tctx.globalAlpha = f.alpha;
-      tctx.strokeStyle = COLORS.blue;
-      tctx.lineWidth = 1.5;
-      tctx.beginPath();
+      tctx.globalAlpha   = f.alpha;
+      tctx.strokeStyle   = COLORS.goldLight;
+      tctx.lineWidth     = 1.5;
       const sz = f.size;
-      tctx.moveTo(0, sz * 0.45);
+      tctx.beginPath();
+      tctx.moveTo(0, sz*0.45);
       tctx.bezierCurveTo(-sz*0.5, sz*0.2, -sz*0.55, -sz*0.1, -sz*0.05, -sz*0.5);
-      tctx.bezierCurveTo(sz*0.05, -sz*0.52, sz*0.5, -sz*0.3, sz*0.5, sz*0.1);
-      tctx.bezierCurveTo(sz*0.4, sz*0.3, sz*0.1, sz*0.4, 0, sz*0.45);
+      tctx.bezierCurveTo( sz*0.05, -sz*0.52,  sz*0.5, -sz*0.3,  sz*0.5,  sz*0.1);
+      tctx.bezierCurveTo( sz*0.4,   sz*0.3,   sz*0.1,  sz*0.4,  0,       sz*0.45);
       tctx.stroke();
       tctx.globalAlpha = 1;
       tctx.restore();
@@ -291,7 +292,3 @@ document.getElementById('btn-retry').addEventListener('click', () => {
 
 // ── Initial screen ────────────────────────────────────────────────
 goTo('title');
-
-// ── Input scaleX fix: reinit on resize ───────────────────────────
-// (input module needs a getter; the getter closure captures gameCanvas so it
-//  automatically reads the updated bounding rect on each frame)
