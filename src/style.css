@@ -1,0 +1,368 @@
+/* ── Reset & base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --parchment:      #F2E7CF;
+  --parchment-dark: #E4D4B0;
+  --ink:            #1F1A14;
+  --ink-soft:       #4A4036;
+  --blue:           #1C3F5E;
+  --blue-light:     #3D6E94;
+  --gold:           #B8893E;
+  --oxblood:        #7A2E2E;
+  --font-display:   'Cormorant Garamond', Georgia, serif;
+  --font-body:      'EB Garamond', Georgia, serif;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--ink);
+  font-family: var(--font-body);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Screen system ────────────────────────────────────────────── */
+#app {
+  position: relative;
+  width: 100%; height: 100%;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+  background: var(--parchment);
+}
+
+.screen.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── Paper grain overlay (pseudo) ─────────────────────────────── */
+.screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Vignette */
+.screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(30,20,10,0.35) 100%);
+  pointer-events: none;
+  z-index: 9;
+}
+
+/* ── Title screen ─────────────────────────────────────────────── */
+#screen-title {
+  background: var(--parchment);
+}
+
+.title-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+}
+
+.title-content {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+.title-ornament {
+  font-size: 2.5rem;
+  color: var(--blue);
+  line-height: 1;
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+.game-title {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-shadow: 2px 3px 0 rgba(28,63,94,0.12);
+}
+
+.tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--blue);
+  letter-spacing: 0.04em;
+}
+
+.attribution {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.03em;
+}
+.attribution em { font-style: italic; }
+
+/* ── Buttons ──────────────────────────────────────────────────── */
+.btn-primary {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--parchment);
+  background: var(--blue);
+  border: 2px solid var(--gold);
+  padding: 0.65em 2.2em;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: color 0.3s ease, background 0.3s ease;
+  outline: none;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s ease;
+  z-index: 0;
+}
+.btn-primary:hover::before { transform: scaleX(1); }
+.btn-primary:hover { color: var(--ink); }
+.btn-primary span, .btn-primary { position: relative; z-index: 1; }
+
+/* ── Game screen ──────────────────────────────────────────────── */
+#screen-game {
+  background: var(--parchment);
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.game-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%; height: 100%;
+}
+
+/* HUD */
+.hud {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.5rem 1.5rem;
+  background: var(--parchment-dark);
+  border-bottom: 1px solid rgba(31,26,20,0.2);
+  z-index: 20;
+  position: relative;
+}
+
+.hud-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.hud-label {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.hud-value {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.hud-blots { color: var(--oxblood); }
+
+.btn-mute {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--ink-soft);
+  color: var(--ink-soft);
+  font-size: 1rem;
+  width: 2rem; height: 2rem;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.2s, color 0.2s;
+  padding: 0;
+}
+.btn-mute:hover { border-color: var(--blue); color: var(--blue); }
+.btn-mute.muted { border-color: var(--oxblood); color: var(--oxblood); text-decoration: line-through; }
+
+/* Game body */
+.game-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.canvas-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-width: 0;
+}
+
+#game-canvas {
+  display: block;
+  /* sizing handled in JS */
+}
+
+/* Manuscript panel */
+.manuscript-panel {
+  width: 240px;
+  min-width: 200px;
+  max-width: 280px;
+  background: rgba(244,235,207,0.6);
+  border-left: 1px solid rgba(31,26,20,0.15);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  box-shadow: inset 4px 0 12px rgba(31,26,20,0.06);
+  overflow: hidden;
+}
+
+.manuscript-header {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--gold);
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.manuscript-lines {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.manuscript-word {
+  display: inline;
+  opacity: 0;
+  animation: wordAppear 0.5s ease forwards;
+}
+
+@keyframes wordAppear {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.manuscript-line {
+  display: block;
+  overflow: hidden;
+  min-height: 1.8em;
+}
+
+/* ── Victory screen ───────────────────────────────────────────── */
+#screen-victory {
+  background: var(--parchment);
+}
+
+.victory-content {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  text-align: center;
+  padding: 2rem;
+  max-width: 580px;
+}
+
+.victory-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.victory-poem {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.9;
+  color: var(--ink);
+  text-align: left;
+  padding: 1.5rem 2rem;
+  border: 1px solid rgba(184,137,62,0.4);
+  border-top: 2px solid var(--gold);
+  background: rgba(255,255,255,0.25);
+  box-shadow: 0 4px 24px rgba(31,26,20,0.1);
+  position: relative;
+}
+
+.victory-poem p {
+  margin: 0;
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.victory-stats {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.stat-sep { color: var(--ink-soft); }
+
+/* ── Game Over screen ─────────────────────────────────────────── */
+#screen-gameover { background: var(--parchment); }

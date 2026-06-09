@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EmilyBlaster</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Title Screen -->
+    <div id="screen-title" class="screen active">
+      <canvas id="title-canvas" class="title-canvas"></canvas>
+      <div class="title-content">
+        <div class="title-ornament">❧</div>
+        <h1 class="game-title">EmilyBlaster</h1>
+        <p class="tagline">Compose the poem before it falls.</p>
+        <button class="btn-primary" id="btn-begin">Begin</button>
+        <p class="attribution">Inspired by <em>Tomorrow, and Tomorrow, and Tomorrow</em></p>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="screen-game" class="screen">
+      <div class="game-layout">
+        <div class="hud">
+          <div class="hud-group">
+            <span class="hud-label">Score</span>
+            <span class="hud-value" id="hud-score">0</span>
+          </div>
+          <div class="hud-group">
+            <span class="hud-label">Accuracy</span>
+            <span class="hud-value" id="hud-accuracy">—</span>
+          </div>
+          <div class="hud-group">
+            <span class="hud-label">Blots</span>
+            <span class="hud-value hud-blots" id="hud-blots">0 / 5</span>
+          </div>
+          <button class="btn-mute" id="btn-mute" title="Toggle sound">♪</button>
+        </div>
+        <div class="game-body">
+          <div class="canvas-wrap">
+            <canvas id="game-canvas"></canvas>
+          </div>
+          <div class="manuscript-panel">
+            <div class="manuscript-header">Manuscript</div>
+            <div class="manuscript-lines" id="manuscript-lines"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="screen-victory" class="screen">
+      <div class="victory-content">
+        <div class="title-ornament" style="color:#B8893E">✦</div>
+        <h2 class="victory-title">The Poem is Complete</h2>
+        <div class="victory-poem" id="victory-poem"></div>
+        <div class="victory-stats">
+          <span id="victory-score"></span>
+          <span class="stat-sep">·</span>
+          <span id="victory-accuracy"></span>
+        </div>
+        <button class="btn-primary" id="btn-replay">Play Again</button>
+        <p class="attribution">Emily Dickinson, c. 1863</p>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="screen-gameover" class="screen">
+      <div class="title-content">
+        <div class="title-ornament" style="color:#7A2E2E">✦</div>
+        <h2 class="game-title" style="color:#7A2E2E;font-size:2.8rem">Too Many Blots</h2>
+        <p class="tagline">The manuscript is ruined.</p>
+        <button class="btn-primary" id="btn-retry">Try Again</button>
+      </div>
+    </div>
+
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
